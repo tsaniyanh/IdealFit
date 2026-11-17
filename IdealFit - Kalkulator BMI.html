@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>IdealFit - Kalkulator BMI</title>
+<style>
+:root {
+  --bg:#f4f8f2; --card:#ffffff; --text:#2c3e50; --muted:#6b7a88; --line:#dfe7dc;
+  --accent:#4fae63; --accent-text:#ffffff; --soft:#e6f3e4; --tip:#f1f6ef;
+  --c1:#85c1e9; --c2:#56c596; --c3:#ffc08a; --c4:#ff8b94;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:#14211a; --card:#1d2d24; --text:#e8f1ea; --muted:#9db3a4; --line:#2e4437;
+    --accent:#5fc274; --accent-text:#0e1a13; --soft:#27402f; --tip:#223629; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#14211a; --card:#1d2d24; --text:#e8f1ea; --muted:#9db3a4; --line:#2e4437;
+  --accent:#5fc274; --accent-text:#0e1a13; --soft:#27402f; --tip:#223629; color-scheme:dark;
+}
+html { scroll-padding-top:env(safe-area-inset-top,0px); }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; line-height:1.5; }
+.wrap { max-width:560px; margin:0 auto; padding:24px 16px 40px; }
+header { text-align:center; margin-bottom:18px; }
+header .mascot { font-size:3.4rem; line-height:1; }
+header h1 { margin:6px 0 2px; font-size:1.8rem; color:var(--accent); }
+header p { margin:0; color:var(--muted); font-size:.95rem; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:20px; padding:22px; }
+.toggle { display:flex; gap:6px; background:var(--soft); padding:5px; border-radius:14px; margin-bottom:18px; }
+.toggle button { flex:1; padding:10px; border:0; border-radius:10px; background:transparent; color:var(--muted); font:inherit; font-weight:600; cursor:pointer; }
+.toggle button.on { background:var(--card); color:var(--accent); box-shadow:0 1px 4px rgba(0,0,0,.12); }
+label { display:block; font-size:.8rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin:0 0 6px; }
+.row { display:flex; gap:10px; align-items:center; margin-bottom:16px; }
+.row input { flex:1; min-width:0; padding:12px 14px; font:inherit; font-size:1.15rem; font-weight:700; text-align:center; color:var(--text); background:var(--card); border:2px solid var(--line); border-radius:12px; outline:none; }
+.row input:focus { border-color:var(--accent); }
+.unit { min-width:52px; text-align:center; padding:10px; border-radius:10px; background:var(--soft); color:var(--accent); font-weight:700; font-size:.85rem; }
+.go { width:100%; padding:14px; border:0; border-radius:14px; background:var(--accent); color:var(--accent-text); font:inherit; font-size:1.1rem; font-weight:700; cursor:pointer; }
+.go:active { transform:scale(.98); }
+.err { display:none; margin:0 0 12px; padding:10px 12px; border-radius:10px; background:#ffe3e5; color:#9b1c28; font-size:.9rem; }
+#result { display:none; margin-top:22px; }
+.big { text-align:center; padding:20px; border-radius:16px; background:var(--soft); }
+.big .lbl { font-size:.78rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+.big .val { font-size:3.2rem; font-weight:800; line-height:1.1; }
+.big .st { display:inline-block; margin-top:6px; padding:4px 16px; border-radius:20px; font-weight:700; color:#1d2b22; }
+.gauge { position:relative; height:14px; margin:22px 4px 6px; border-radius:10px;
+  background:linear-gradient(to right,var(--c1) 0 23%,var(--c2) 23% 50%,var(--c3) 50% 67%,var(--c4) 67% 100%); }
+.needle { position:absolute; top:-6px; width:5px; height:26px; margin-left:-2px; border-radius:3px; background:var(--text); transition:left .6s ease; }
+.gl { display:flex; justify-content:space-between; font-size:.72rem; color:var(--muted); margin:0 4px; }
+.stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
+.stat { padding:12px; border:1px solid var(--line); border-radius:14px; text-align:center; }
+.stat b { display:block; font-size:1.25rem; color:var(--accent); }
+.stat span { font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:600; }
+.advice { margin-top:14px; padding:14px; border-radius:14px; background:var(--soft); }
+h2 { font-size:1rem; margin:18px 0 8px; }
+.tip { padding:10px 12px; margin-bottom:8px; border-radius:12px; background:var(--tip); font-size:.92rem; }
+footer { text-align:center; margin-top:18px; font-size:.8rem; color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="mascot">🦫</div>
+    <h1>IdealFit</h1>
+    <p>Kalkulator BMI &amp; berat badan ideal</p>
+  </header>
+
+  <div class="card">
+    <div class="toggle">
+      <button id="bM" class="on" type="button">👦 Pria</button>
+      <button id="bF" type="button">👧 Wanita</button>
+    </div>
+
+    <label for="tinggi">Tinggi badan</label>
+    <div class="row"><input id="tinggi" type="number" value="165" inputmode="decimal"><div class="unit">cm</div></div>
+
+    <label for="berat">Berat badan</label>
+    <div class="row"><input id="berat" type="number" value="60" inputmode="decimal"><div class="unit">kg</div></div>
+
+    <label for="usia">Usia</label>
+    <div class="row"><input id="usia" type="number" value="25" inputmode="numeric"><div class="unit">thn</div></div>
+
+    <p class="err" id="err"></p>
+    <button class="go" id="hitung" type="button">Hitung BMI</button>
+
+    <div id="result">
+      <div class="big">
+        <div class="lbl">Indeks Massa Tubuh</div>
+        <div class="val" id="bmi">0.0</div>
+        <div class="st" id="status"></div>
+      </div>
+      <div class="gauge"><div class="needle" id="needle"></div></div>
+      <div class="gl"><span>Kurus</span><span>Normal</span><span>Gemuk</span><span>Obesitas</span></div>
+
+      <div class="stats">
+        <div class="stat"><b id="ideal">-</b><span>Berat ideal</span></div>
+        <div class="stat"><b id="selisih">-</b><span>Selisih berat</span></div>
+        <div class="stat"><b id="kalori">-</b><span>Kalori / hari</span></div>
+        <div class="stat"><b id="air">-</b><span>Air / hari</span></div>
+      </div>
+
+      <div class="advice" id="saran"></div>
+      <h2>💡 Tips dari IdealFit</h2>
+      <div id="tips"></div>
+    </div>
+  </div>
+  <footer>Hasil bersifat perkiraan, bukan diagnosis medis.</footer>
+</div>
+
+<script>
+// Data kategori: [batas atas BMI, nama status, warna, saran, tips]
+var KATEGORI = [
+  [17.0, "Sangat Kurus", "var(--c1)", "Segera konsultasi ke dokter atau ahli gizi untuk menambah berat badan.",
+    ["Makan 4–5x sehari dengan porsi kecil", "Perbanyak protein (telur, ikan, tahu, tempe)", "Konsultasi ke dokter"]],
+  [18.5, "Kurus", "var(--c1)", "Tambah asupan makanan bergizi dan olahraga beban ringan.",
+    ["Tambah camilan sehat (pisang, kacang)", "Latihan beban ringan 3x seminggu", "Minum susu atau konsumsi yogurt"]],
+  [25.0, "Normal", "var(--c2)", "Selamat! Berat badanmu ideal. Pertahankan pola hidup sehat.",
+    ["Pertahankan pola makan seimbang", "Olahraga 150 menit per minggu", "Tidur 7–8 jam per malam"]],
+  [30.0, "Gemuk", "var(--c3)", "Kurangi kalori secara bertahap dan mulai olahraga ringan.",
+    ["Perbanyak sayur dan buah", "Jalan kaki 30 menit setiap hari", "Kurangi makanan olahan dan minuman manis"]],
+  [999, "Obesitas", "var(--c4)", "Konsultasi dokter dianjurkan. Mulai dengan langkah kecil yang konsisten.",
+    ["Konsultasi dokter atau ahli gizi", "Olahraga low-impact (renang, sepeda)", "Buat rencana makan terstruktur"]]
+];
+var gender = "pria";
+var $ = function (id) { return document.getElementById(id); };
+
+function setGender(g) {
+  gender = g;
+  $("bM").classList.toggle("on", g === "pria");
+  $("bF").classList.toggle("on", g === "wanita");
+}
+$("bM").onclick = function () { setGender("pria"); };
+$("bF").onclick = function () { setGender("wanita"); };
+
+function cekInput(nilai, min, max, nama) {
+  if (isNaN(nilai) || nilai < min || nilai > max) {
+    return nama + " harus berupa angka antara " + min + " dan " + max + ".";
+  }
+  return "";
+}
+
+function hitung() {
+  var tinggi = parseFloat($("tinggi").value);
+  var berat = parseFloat($("berat").value);
+  var usia = parseFloat($("usia").value);
+
+  var pesan = cekInput(tinggi, 100, 250, "Tinggi") || cekInput(berat, 20, 250, "Berat") || cekInput(usia, 5, 100, "Usia");
+  var err = $("err");
+  if (pesan) { err.textContent = pesan; err.style.display = "block"; return; }
+  err.style.display = "none";
+
+  var bmi = berat / Math.pow(tinggi / 100, 2);
+  var kat = KATEGORI.find(function (k) { return bmi < k[0]; });
+
+  // Berat ideal (Devine), kalori (Harris-Benedict x 1.55), air (berat x 0.033)
+  var dasar = gender === "pria" ? 50 : 45.5;
+  var ideal = Math.max(dasar + 2.3 * ((tinggi - 152.4) / 2.54), 40);
+  var bmr = gender === "pria"
+    ? 88.362 + 13.397 * berat + 4.799 * tinggi - 5.677 * usia
+    : 447.593 + 9.247 * berat + 3.098 * tinggi - 4.330 * usia;
+  var selisih = berat - ideal;
+
+  $("bmi").textContent = bmi.toFixed(1);
+  var st = $("status");
+  st.textContent = kat[1];
+  st.style.background = kat[2];
+  $("ideal").textContent = Math.round(ideal - 3) + "–" + Math.round(ideal + 3) + " kg";
+  $("selisih").textContent = (selisih >= 0 ? "+" : "") + selisih.toFixed(1) + " kg";
+  $("kalori").textContent = Math.round(bmr * 1.55) + " kkal";
+  $("air").textContent = (berat * 0.033).toFixed(1) + " L";
+  $("saran").textContent = kat[3];
+  $("tips").innerHTML = kat[4].map(function (t) { return '<div class="tip">' + t + "</div>"; }).join("");
+
+  var posisi = Math.min(Math.max((bmi - 10) / 30, 0), 1) * 100;
+  $("needle").style.left = posisi + "%";
+  $("result").style.display = "block";
+  $("result").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+$("hitung").onclick = hitung;
+</script>
+</body>
+</html>
